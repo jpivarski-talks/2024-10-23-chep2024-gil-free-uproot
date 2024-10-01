@@ -13,7 +13,9 @@ import awkward as ak
 import uproot
 
 
-def in_thread(N, start, stop, ptr_offsets, ptr_pt, ptr_eta, ptr_phi, ptr_mass):
+def in_thread(which, N, start, stop, ptr_offsets, ptr_pt, ptr_eta, ptr_phi, ptr_mass):
+    print(f"START {which}", file=sys.stderr)
+
     offsets = (ctypes.c_int64 * (N + 1)).from_address(ptr_offsets)
     pt = (ctypes.c_float * offsets[-1]).from_address(ptr_pt)
     eta = (ctypes.c_float * offsets[-1]).from_address(ptr_eta)
@@ -36,10 +38,16 @@ def in_thread(N, start, stop, ptr_offsets, ptr_pt, ptr_eta, ptr_phi, ptr_mass):
                     max_mass = m
         mass[event] = max_mass
 
-with uproot.open("/home/jpivarski/storage/data/Run2012B_DoubleMuParked-big.root:Events") as tree:
-    arrays = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
+# https://opendata.cern.ch/record/12365
+with uproot.open("~/Downloads/Run2012B_DoubleMuParked.root:Events") as tree:
+    arrays1 = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
 
-# arrays = ak.concatenate([arrays, arrays, arrays, arrays])
+# https://opendata.cern.ch/record/12366
+with uproot.open("~/Downloads/Run2012C_DoubleMuParked.root:Events") as tree:
+    arrays2 = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
+
+arrays = ak.concatenate([arrays1, arrays2])
+del arrays1, arrays2
 
 N = len(arrays)
 
@@ -50,8 +58,12 @@ phi = arrays["Muon_phi"].layout.content.data
 
 mass = np.zeros(N, np.float32)
 
-NUM_THREADS = 16
+NUM_THREADS = int(sys.argv[1])
 start_stop = np.linspace(0, N, NUM_THREADS + 1).astype(int).tolist()
+
+time.sleep(1)
+
+print("START", file=sys.stderr)
 
 start_timer = time.perf_counter()
 
@@ -60,6 +72,7 @@ for which in range(NUM_THREADS):
     start, stop = start_stop[which], start_stop[which + 1]
 
     thread = threading.Thread(target=in_thread, args=(
+        which,
         N,
         start,
         stop,
@@ -79,4 +92,8 @@ for thread in threads:
 
 stop_timer = time.perf_counter()
 
+print("STOP", file=sys.stderr)
+
 print(NUM_THREADS, stop_timer - start_timer)
+
+time.sleep(3)

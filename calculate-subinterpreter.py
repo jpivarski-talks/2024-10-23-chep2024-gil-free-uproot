@@ -14,6 +14,10 @@ import uproot
 
 def in_subinterp():
     # Need to re-import; this is in its own little world...
+
+    import sys
+    print(f"START {which}", file=sys.stderr)
+
     from math import sqrt, cosh, cos
     import ctypes
     import test.support.interpreters.queues
@@ -46,10 +50,16 @@ def in_subinterp():
     notify_when_done.put(which)
 
 
-with uproot.open("/home/jpivarski/storage/data/Run2012B_DoubleMuParked-big.root:Events") as tree:
-    arrays = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
+# https://opendata.cern.ch/record/12365
+with uproot.open("~/Downloads/Run2012B_DoubleMuParked.root:Events") as tree:
+    arrays1 = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
 
-# arrays = ak.concatenate([arrays, arrays, arrays, arrays])
+# https://opendata.cern.ch/record/12366
+with uproot.open("~/Downloads/Run2012C_DoubleMuParked.root:Events") as tree:
+    arrays2 = tree.arrays(["Muon_pt", "Muon_eta", "Muon_phi"])
+
+arrays = ak.concatenate([arrays1, arrays2])
+del arrays1, arrays2
 
 N = len(arrays)
 
@@ -60,10 +70,14 @@ phi = arrays["Muon_phi"].layout.content.data
 
 mass = np.zeros(N, np.float32)
 
-NUM_THREADS = 16
+NUM_THREADS = int(sys.argv[1])
 start_stop = np.linspace(0, N, NUM_THREADS + 1).astype(int).tolist()
 
 notify_when_done = test.support.interpreters.queues.create()
+
+time.sleep(1)
+
+print("START", file=sys.stderr)
 
 start_timer = time.perf_counter()
 
@@ -96,4 +110,8 @@ for subinterp in subinterps:
 
 stop_timer = time.perf_counter()
 
+print("STOP", file=sys.stderr)
+
 print(NUM_THREADS, stop_timer - start_timer)
+
+time.sleep(1)
