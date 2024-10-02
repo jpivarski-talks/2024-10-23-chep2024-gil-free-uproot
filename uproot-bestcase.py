@@ -63,5 +63,5 @@ for thread in threads:
 
 stop_timer = time.perf_counter()
 
-print(NUM_THREADS, stop_timer - start_timer)
+print(NUM_THREADS, type(tree1.file.source).__name__, stop_timer - start_timer)
 

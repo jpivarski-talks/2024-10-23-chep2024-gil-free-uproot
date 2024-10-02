@@ -30,4 +30,4 @@ for array in uproot.iterate(
 
 stop_timer = time.perf_counter()
 
-print(NUM_THREADS, stop_timer - start_timer)
+print(NUM_THREADS, SOURCE, stop_timer - start_timer)
