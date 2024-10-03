@@ -1,0 +1,820 @@
+https://trends.google.com/trends/explore?date=all&q=%2Fm%2F03c25qc&hl=en
+
+The Python GIL has always been there, but there was an explosion of interest in Nov 2016.
+
+Python 3.6 was introduced around then, which added asyncio: https://docs.python.org/3/whatsnew/3.6.html
+
+-----------
+
+https://peps.python.org/pep-0703/
+
+PEP 703 has high-level explanations of what needs to be done/is being done to support free-threading.
+
+It includes the most complete list of historical attempts.
+
+-----------
+
+https://peps.python.org/pep-0684/
+
+PEP 684 is the subinterpreters alternative (cleaning up subinterpreters to make them not share a GIL).
+
+-----------
+
+https://developer.vonage.com/en/blog/removing-pythons-gil-its-happening
+
+A blog.
+
+-----------
+
+https://mail.python.org/pipermail/python-dev/2000-April/003605.html
+
+Greg Stein's announcement of his attempt to remove the GIL from Python 1.4 (Apr 2000).
+
+The name "free threading" is already used.
+
+-----------
+
+https://mail.python.org/pipermail/python-dev/2001-August/016761.html
+
+A more extensive discussion of free-threading in Aug 2001, initiated by _Python is Middleware_ (https://www.tundraware.com/Technology/Python-Is-Middleware/Python-Is-Middleware.html).
+
+A full list of the Usenet thread from that month: https://mail.python.org/pipermail/python-dev/2001-August/thread.html#16761
+
+-----------
+
+https://web.archive.org/web/20080907123430/http://blog.snaplogic.org/?p=94
+
+Mr. Rossum, Tear Down that GIL!
+
+-----------
+
+https://www.artima.com/weblogs/viewpost.jsp?thread=214235
+
+Guido's response.
+
+-----------
+
+https://dabeaz.blogspot.com/2011/08/inside-look-at-gil-removal-patch-of.html
+
+Dave Beazley's attempt to use Greg Stein's Python 1.4 patch (in 2011). It's even worse than people remember.
+
+-----------
+
+https://speakerdeck.com/pycon2017/larry-hastings-the-gilectomy-hows-it-going?slide=40
+
+A talk on Gilectomy: Larray Hastings's attempt to remove the GIL from Python 3.5. Still problematic.
+
+GitHub: https://github.com/larryhastings/gilectomy
+
+-----------
+
+https://github.com/colesbury/nogil
+
+Sam Gross's _successful_ attempt a few years ago. This was the basis of PEP 703.
+
+Greg Stein's comment on it: https://github.com/colesbury/nogil/issues/8
+
+-----------
+
+https://youtu.be/jHOtyx3PSJQ?si=3aVXomwwpX-r359T
+
+Podcast on PEP 703. Here's a transcript:
+
+hi my name is Pablo gindo and my name is ukash langa and this is the core py
+podcast a new podcast where we discuss the internals of cpython on adventures in making a new version of your favorite
+programming language today we will be talking about pep 73 which is basically this pep that removes the global
+interpreted lock if you don't know what it is don't worry we will we will go very deep into the topic um and we will
+talk about uh everything that you need to know about the most exciting python chain in a long time uh even if you
+pretend to use the thing or you want to maintain the thing which is uh two different things as many people will
+soon find out right uh yeah let's maybe start with the current state of things so how does python work today and why is
+CURRENT STATE OF THINGS
+this a problem um the key Point here is basically that um cpython uses a way to
+Reference counting
+manage memory uh called reference counting the whole schema is more complicated because then there is like
+cycle DC and whatnot but the basic idea here is that um uh reference counting is
+the main schema to manage memory and the idea is that every object knows how many people are using it so if I have a list
+and then I you know have two variables pointing to my list then the reference count of the list is two and the the
+whole thing is that when when reference count reaches zero we know that nobody is using the object and C python can
+deallocate the object right right and then you know you can if you are one of these smart ass people uh you can say
+Garbage collection
+well you know like what happen if I have like one object that points to another object and then that another object point to the first one uh and nobody
+points to any of these two and then you have what is called a reference cycle and then we have our you know this whole
+different thing called the cycle GC yeah that is in charge of you know detecting these reference cycles and removing them
+which you know is is a bit more comp and we are not going to go into detail right
+okay so this memory management scheme is very useful for uh the users of python
+since you don't have to actually think about memory management yourself and in fact even though it is dynamic it is
+very predictable like when you um leave a block where an object was created and
+it's not actually given anywhere else um python can rather reliably know that
+okay now this is the time to decrease the reference and if the reference reaches zero we can free memory so this
+What is the Global Interpreter Lock?
+is tremendously useful and also not extremely kind of complicated to get
+right thanks to one Global interpret lock that we have that is used for all sorts of operations to make sure the
+internals of The Interpreter stay correct when you are dealing with multiple threats of execution so for
+example all this reference count in crafing and the crafing is something that we need to make sure is a Atomic
+and is not going to be broken by another threat trying to do the same thing at the very exact same time so you know
+kind of with the reference counting for example incrementing only once instead of twice but the global interpreter lock
+is used for many other things uh most importantly to protect internal memory
+representations of Pi object so any kind of object that you have in Python um was
+is going to have its header with a bunch of internal um information there and
+internal data structures like dictionaries like lists and whatnot when you're adding or removing an element
+from them any sort of mutation um we will use the global trip loog to ensure
+that it is still atomically represented um with some valid state so you're not
+going to have a situation where an object is in the process of being added to a list but we not actually quite done
+with that yet and you're reading an invalid list so yeah we actually have the G
+The GIL and threading
+as this one Central way to synchronize those operations and um that makes stuff
+easy for us to reason about but it actually limits what you can do when you
+want to run threads but python does have the threading module right so why even bother with the threading module if uh
+we have this go lock that causes things to never run in parallel well never is a
+strong word in fact we have uh plenty of opportunity unities to free the global
+interpreter log from the current thread when we know that the current action
+executed in that thread is not going to touch python so if you're doing some computation straight on bytes I don't
+know converting an MP3 or doing some operations on uh like in memory arrays that don't actually have anything to do
+with by objects you can for a while free the global interpreter lock if you're waiting for external IO for Network you
+can do the same thing so threads are to some extent usable in Python even today
+but um the most popular thing that they would be used for uh which is user code
+parallelism is not at this point enabled it's not possible uh with the glit loock
+as it is now right and there is a lot of hunger for the idea of being able to
+actually run uh you know parallel computations in Python um even if for a long time we have said well you know you
+you have this model when you know things are maybe not parallel but you know most of the cases are kind of fine especially
+for Io so you can still run your HTTP server kind of okay with python because you know most of the threat will be
+waiting for uh data on sockets there is still cases when this is not enough and in the modern world you know CPUs are
+not like faster and faster and faster in a single core we don't have like CPUs of 25 GHz right yeah um uh what we have is
+a lot of course like and even these days we have have a stupid amount of core in some of these CPUs I think one of these
+racing has now 90 something cores which is bananas yes the new thread rippers right right yeah it's only $2,000 of CPU
+so now now they are competing to see if the gpus are more expensive that the CPUs we'll see who wins right even in
+your phone you're going to have like 10 cores right so like this kind of world with multiple cores is not something
+that is uh just relegated to high-end Computing like everybody has a multi-core computer in their pocket now
+exactly so for instance there is there is a lot of cases when still this is a
+huge difference for instance if you happen to run let's say numeric code uh using python objects even if you're
+using numai yes a lot of the operations happen in C but like still there's a lot of the stuff that still happens in
+Python for instance every time and this is something that a lot of people don't realize every time you convert some of
+the C uh objects to python objects you need the Gil and therefore if you have a
+heavy you know array and then you need to comp transform this into a lot of python objects then you need the guil
+for that and if you have multiple threads doing the same thing then only one thread at a time can do the
+conversion um apart from the operations itself so that's one of the cases the other case is basically the idea of
+sharing objects between these threads without having to Der serial like serialize and deserialize these objects
+Current ways around the GIL
+for instance recently in Python 312 we have um multiple interpreters this is a way to uh circumvent the guild
+limitations and the idea is you can have like several copies of python in the same process but the problem is that you
+can still have like one list and send it to another copy of python you need to uh
+basically copy it so the every copy of python has its own version of the list there is no way to have let's say a big
+uh cache that is Ser between all these copies of python and use uh for look
+apps you need a whole copy so you still need to duplicate memory and pay for the serialization and the serialization at
+least for now there is um there is things that we are trying to do to avoid this but like you know if we didn't have
+a guild you could literally share this thing in a safe way uh without having to worry about it yeah exactly right since
+um like we had you know ways to uh overcome the limitation of the global
+interpretor log in the past multiprocessing was one and you could use it kind of in an elegant way from
+ASN Kyo with uh the process pool executor and so on and so on so as long
+as the amount of dat that you needed to share between your um kind of
+orchestrator process and the worker processes wasn't huge this usually wasn't a big deal but as soon as the
+amount of data shared between the workers and the orchestrator were large
+you would see that in fact like all this multi-processing business is just you
+know kind of circumvented is limited by the time spent serializing your um
+memory objects into something that another process can now access and read
+and then doing the same uh the other way around when uh you made the computation
+you wanted to do so um being able to share data without serialization is a
+very important use case for this right so this is uh I hope we convince you that this is actually quite important
+and a lot of people want this from the you know the numeric World from the server world so this serves everyone
+right uh so uh why we don't have it maybe maybe interesting to see like the
+HISTORICAL ATTEMPTS TO REMOVE THE GIL
+story of of this change in the sense that a lot of people actually have tried to fight this battle and unfortunately
+we have not succeeded so so maybe it's good to to quickly go through all the all the current attempts to remove the
+Gil and and briefly discuss why they fail right so in fact we could have had
+1999: Greg Stein's attempt at Python 1.6
+it uh a long time back um even in 1999 at the time of python 1.6 uh Greg Stein
+did actually remove the Gale successfully the only problem with that was replacing one uh very coarse lock
+with many small locks for making the reference counting operations still
+valid uh made the performance of The Interpreter way worse and this is why
+this patch was um eventually abandoned since the changes required to maybe
+overcome this limitation were increasingly of large scope and the
+python interpreter at the time had this internal feature for maintainers that was supposed to be very clear uh in how
+it's implemented it was supposed to be quite hackable and readable we have to understand what we're dealing with
+otherwise how can we maintain this uh interpreter jython an implementation of
+Jython doesn't have the GIL
+python in the jvm um famously does not have the globalp log so it is definitely
+a possibility but what they also don't really have to deal with is all the
+extensions to your python um modules and you know libraries written in C so
+because they don't really deal with the c API it is easier for them to also drop the global interor lock and just have
+finer grain locking that is using some of those same facilities like already present in the jvm in the meantime in
+2015: Larry Hastings' Gilectomy at Python 3.5
+2015 Larry Hastings did also successfully removed the Gill from python 3.5 and again he discovered that
+the result is very slow spending a lot of time like fine-tuning reference
+counting so that it could be deferred and so on and so on he was able to meet
+the performance of a single core with his version but he needed to use like
+seven cores to match the single core performance of the regular python interpreter which 7 to1 is a large ask
+for anybody so at some point uh he attempted you know kind of actually making a new garbage collector for
+python for gomy 2.0 but very quickly it turned out that like this is an area of research that is so large that he
+couldn't just do it by himself so you know his work is very important it identified the reference counting as
+like a big scaling bottleneck it show that actually removing the Gil and replacing it with uh you know finer G
+blocks is possible Right the performance is the make or break of that change and
+this is this is an interesting realization right like uh a lot of people say oh removing the Gill is extremely hard and that's why we have
+not done it yet but the actual the actual reality is that no actually removing the Gill is very easy is you
+Pablo says removing the GIL is actually very easy
+just add tiny logs on all the python objects and you're done and the problem is making it fast enough right like
+that's where the actual price is like you know you cannot just add locks to everything because even in the single
+thread case even if locks these days are extremely fast and efficient and you know like I remember Larry mentioning
+after conference like tons of people approaching him and saying hey look there is this crazy implementation of
+locks that is super fast and blah blah blah like that doesn't matter it's still slow right like because if you're doing
+it hundreds and millions of times because reference counts happens a lot um then then it's you're you're losing
+the battle so you need some heavy heavy Weaponry here to to make sure that you know you don't make python twice as low
+or something like that right yeah so I I would like to qualify like maybe like for Pablo Galindo like removing uh the
+Łukasz is skeptical
+Gill is easy like for me in particular it wouldn't be so just that operation allone and even if you don't think about
+performance is still a feet of engineering since if you're removing one lock and replace it with two well
+conceptually isy well you're introducing a new class of problems that did not exist before and that's thead locking
+which is the situation where you're holding a lock waiting for some other resource and that other resource
+actually holds another lock and waits for your first resource and the two of
+combined together will wait forever because you know like the ordering of operations is simply invalid so making
+sure that Deadlocks don't happen is uh is is is not a maybe a trivial task but it's definitely table we can solve this
+like this is something that you can do uh but the performance on top of the
+correctness here like makes it a real challenge right and this leave us I think to the 2021 approach which is the
+2021: Sam Gross' nogil at Python 3.9
+the first version of the current pep which is sross uh who works at meta and
+he basically was working for a long time on a version of python 39 that basically
+um uses a bunch of like new approaches to this problem but ideally basically the whole thing is that he removed the
+Gill by having these locks and trying and then he fought really hard to bring
+back performance by implementing a bunch of optimizations of top the idea is that you know you do the kind of a
+straightforward way um with some new methods to you know make reference counting as fast as possible that we are
+going to discuss here yeah and but then the rest of the work that that is here is trying to bring back that performance
+like you know optimizing different ways and trying to uh you know use these locks um you know the the least amount
+of times possible yes exactly um that was a proof of concept he send this email to our main list uh initially
+people were a bit skeptical because you know like every time someone claims to remove the G and and have like the the
+same performance you take it that way the green of Sal salt but uh know some some actually succeeded he did the thing
+it's just that the patch was G normous so it was very difficult to understand even he actually uh you know um sent
+also like if I recall a Google Document describing the technical aspects of his work so it was not just a you know
+passing by with his car you know dropping a six 6,000 line patch or 11,000 if I recall and saying goodbye I
+saw the thing goodbye and he actually like you know tried to explain how how he did it and all yeah like he he spent
+like some considerable work to make sure that this is something that you can incrementally understand so the uh nogel
+of 39 Branch was I think 74 comets and they were structured in a way where
+everything just led to like Comet 74 that actually disabled the globan trible lock but there were changes that came
+before that were more like you know kind of preparations for this last one step
+um and you know kind of over the course of every Comet you could still run the
+python test suite and it will still be passing uh so you know kind of a lot of work there was put like so that it the
+change did look incremental and you could actually kind of understand like at least uh you know what one particular
+change was doing but some of those single comets were still huge like when you're replacing you know kind of
+reference counting with uh this no well non eager reference counting version
+like obviously this is going to be huge um you know and and some of the changes that he made at the time like were not
+even something that we're going to be you know in fact probably having like with pep 704 some of the uh some of the
+changes there were you know kind of needed uh to make performance look better but we decided ever since that
+this is really something well like say orthogonal or something that doesn't really make uh well isn't really related
+to this one change uh but yeah he came to to us like you know there was some uh interests so we even ran like a meeting
+with him uh in late 2021 and it had to be online because you know Co and
+everything uh I wrote like some summary of like that meeting uh you know on the blog you know we talked about uh whether
+this is feasible to implement or not uh but you know kind of there were tons of
+questions on you know whether this is going to be good or bad for the
+community at large whether this is going to break the Capi whether this is going to introduce subtle bugs that are
+impossible to debug now and so on and so on so deciding on whether we're adopting
+it or not was pretty much like impossible like we nobody wanted to
+really be that person that says no but also nobody was sure enough to say a yes
+2023: PEP 703 for Python 3.13
+so only in 2023 we arrived at a moment where this was formalized into a pep to
+actually get this answer from the steering Council like are we doing this or not right and in 2023 you know some
+created this pep which is the one that we are going to talk about here in detail and he actually rebased uh you
+know the whole implementation on top of 312 so we can actually check it on top of the latest improvements that we did
+in Python 311 and very recently this past week as as the time we are
+recording this podcast uh the steing council so we accepted this pep uh with a bunch of conditions so it's not as
+blank acceptance there's a bunch of things in particular you know we we are um you know we are demanding that the
+roll out has to be gradual and then we are going to break as least as possible and then that we can you know
+potentially you know remove all the code if it turns to be uh you know impossible to maintain or or or people cannot adopt
+it or things like that so there's a lot of caveat maybe we can discuss them at the end but yes this is a this is
+something that is happening um you know it will take a lot of time we are Andis a multi-year plan here so because we
+don't want to you know make the same mistakes as we did with python 223 totally different scenario of course we
+are not changing the syntax or anything uh but you know we we we learn our lesson we want to be as careful as
+possible to not break everyone um but yes it's happening so and and ideally we
+are going to we we have uh read the document I mean I certainly have read it because I'm in the St Council and I have
+accepted this document so it's good that I that I know what I'm talking about but as well has read the document in quite a
+lot of detail right and we are here to discuss uh how it works basically or what is the idea let's start with uh the
+PEP 703 IN DETAIL
+first thing which is the one of the core changes that is going to you know create more problems that the pep tries to
+solve which is um bias reference counting which you know sounds very scary which is proper because we are
+close to Halloween so we can say bias reference counting okay so the idea here uh is
+Biased Reference Counting
+that you know like we have this this number of reference that you know uh would tell us how many people uh you
+know are using a given object and now we need to make this number work across multiple threads we cannot just leave
+the number as it is because as you know when threads are incrementing and decrementing the number without any form of locking uh we can have races right
+and then two threads can read the same number at the same time and when they decremented like we we don't have uh
+minus two we have minus one or something like that right so so we need some kind of locking around this number which is
+very slow so the first obvious stupid idea is to add a lock even if this your fastest lock possible unfortunately
+every single attempt that we have tried at this it has failed because it's too too slow the next idea that you may have
+is that you know modern Processor have this Atomic instructions right there is this idea of using Atomic integers and
+this is a way uh which you don't really require a lock at least explicit and the
+CPU performs this special you know memory ordering in which case it ensures that you know if you increase from one
+thread and you decrease in order this is kind of synchronized unfortunately this is is also very slow among other things
+because you know when this happens the CPU needs to throw away caches and they need to synchronize across different
+cores and a bunch of things that make the whole thing still very slow so the idea is using this you know Atomic
+increments and decrements is better but it's still not the the best right yeah so what bias reference counting says is
+the following when you create an object normally what will happen or most of the time what will happen is that the threat
+that creates the object is the one that is more heavily going to use it right it kind of makes sense right like you you
+can think how this this may be true of course it's not like we don't prove it we we cannot just you can probably
+imagine a program that doesn't do this but like you know most of the time this is what's going to happen and the idea is that then every object will have two
+reference counts one of them will only be used for the thread that creates the object and that is unsynchronized that
+is only touched by that threat right so plus y minus one it works fast and nice and then there is the second reference
+count field which is is an atomic integer right and obviously we can change this implementation to something
+more funky but you know for the I think the ACT implementation and for simplification of this uses one of these
+Atomic increments and decrements and the IDE is that every single other thread will modify the second field right so we
+have like a fast version for the thread and a slow version for the for the other field and the the whole idea is that
+from time to time uh the main thread will kind of fold this second number into the first one so it will basically
+merge this this other threads reference count into the first one and there is some logic to find out
+when we need to like you know deallocate the object right based on on these two Fields um but this way we ensure that
+most of the time when we do these operations uh with the with the main thread uh they remain fast because there
+there is no lock right uh so yeah like most objects in fact like stay within the thread that they're being created in
+but even if not and we're using the two Fields like the the thread that created the object is the owner thread so that
+is the thread that actually will now decide that okay the reference count really reached zero so now safe for us
+to uh deallocate the object right and then the idea is that we we uh Mark
+basically the states of objects uh to account for like changes that happen to them to you know make some operations
+faster if we don't need to do uh heavy things for instance if no other thread has ever touched the second field then
+we can just remove the object as we do normally on C Python and so we have these different states and we use like a
+bit of a hack so in the reference count this is a big number uh if you look at this number in binary we use use the
+least two significant bits of the you know number in in binary to Mark the
+state of the object and basically the object can be in four states one of them is basically the fall which is like you
+know the normal python object nothing has touch it but as as as as soon as like other threads start to access the
+object or like you start to support certain operations like we reference and things like that we move these status to
+other ones like particularly right now we have uh three more uh one of them is called wig refs that you know says that
+the object is start supporting wi ref refences and other operations that are optimized like you know uh is is in some
+some list or dictionary or things like that and uh at that point then it needs a bit more you know careful uh
+consideration when you want to destroy this object so when um when you have an object in this in this fashion and then
+you start operating on them it can transition to this status that we call Q and this status basically uh it means
+that some other thread has start modifying this object and it requires the main thread to kind of fold the into
+the first one to figure out if it needs to be deallocated or not and then the last state is when when the fall has
+happened which we call a merge because you you merge these two Fields together and then the the you know the main
+thread or the thread that is basically in charge of destroying this object it has to do the logic to figure out if it
+can be destroyed right now and need to be deferred to uh DC or something right and like frustratingly like all this is
+Other needed speedups: deferred refcounts, immortalization, GC
+still making reference counting too slow so there's even more changes that we need to make
+uh to actually make it not too big of a cost uh to change this reference counting to be threat safe uh one
+realization that we have is that there are some objects that are just accessible for the entire life cycle of
+The Interpreter like once you start it the object is going to be created and it's never going to be deallocated until
+you shut down the entire process examples of that would be false true none this is already kind of simplified
+and allowed making it faster with pep 683 which allows for object
+immortalization so essentially this object doesn't have to be you know present in all the garbage collections
+that are happening because it's never going to be deallocated so there are some small changes that we need to make
+so that it also works with uh biased reference counting and that is still not
+enough because there are objects that are not quite Immortal but they're accessed super often in a Python program
+so those are usually some of the objects that are globally accessible right like top level functions you have code
+objects you have modules those don't use immortalization right because they you know kind of in in theory you can remove
+a module from CIS modules or you can replace a top level function with another one and so on and so on so they
+aren't always kept for the lifetime of the program but usually they are kind of
+global State they are very often uh accessed so what we do with those we also defer
+their reference counting so we can say that one of those two most significant bits that we treat specially in a
+reference counting uh in a reference count is used to mark this object as uh
+deferred reference counting and that counting only happens during garbage collection Cycles which are way less uh
+done way less often than regular reference counting which is eager right it happens you know every time you leave
+uh you leave a scope right every time like an encraft or decra is happening so for different reference counts that's
+not true uh we will um only try to calculate the number of the reference counts during GC Cycles but that makes
+this operation happen way less often making everything faster right this is still require some changes on the whole
+DC because right now it means that you know what we are trying to avoid is every time you let's say push one of
+these uh objects that are um accessible from the global state to the python stack so for instance it's in a local
+variable somewhere or accessible from a local variable you cannot don't do these operations which means that when the GC
+uh is trying to find these objects we need to teach the GC also to walk the python stack as well all the thread
+Stacks to figure out also like okay so these reference counts are delayed so you need to account for them to figure
+out that indeed you need to destroy this object because right now the GC doesn't understand how to do that so so you know
+like more more changes are pushed to the GC to ensure that pyth the GC understands this new concept of the
+theay reference counting right and also the garbage collector now will have to be able to visit all the threads right
+to actually kind of follow the stacks everywhere so that it knows uh what actually still stays in memory and what
+is not turns out that this doesn't solve all the problems this only solves the reference problem uh reference count
+mimalloc
+problem right so now you know with this method we have a way to you know you know refer to objects from different
+threats in an efficient way or or at least more efficient way but you still have a lot of like synchronization
+problems like if if you have two threads pushing elements into a list so calling list a pen this can still race right so
+so now it turns out that we require a lot more changes to ensure that your python application doesn't crash and
+this is kind of important because like in a compile language uh like you know uh if if you allow me to say a YOLO
+language like C++ when you know it's up to you and it's a you know free lunch there is no you know nice borrow Checker
+or compiler you know yelling at you if you don't do it correctly um but you know performance um then um the problem
+is that if you have let's say a container like a vector and then you're trying to push from two different threads to that container or maybe
+remove at the same time your container can end in a really bad State because you know access is not synchronized so
+you need to protect this with a lock and the problem is that if you don't do it it will crash technically it enters this
+realm that is called undefine Behavior with you know unicorns can appear and according to the holy standard but in
+practice it basically will crash in a weird way and it's going to be very very hard to the back and in Python we don't
+we don't like this like we don't want our programs to crash just because you're not using locks when you're appending to a list right maybe we can
+we want to show you at least a nice exception or in the best case we want it to just work because right now that's
+the way it is right now if you open 12 days from two threads um it's working you can still have some surprises like
+for instance you use list do remove with an index and then for another thread you append to it you may remove the r
+element if these two Ray because you know they can be switched but you know it won't crash and it will you will not
+end with like the list thinking that it has 10 elements but really has nine so when it tries to remove it it just crashes so we needed a bunch of changes
+and these changes are supported by um basically coupling a bit more the way C python manage memory because uh as you
+will see this this uses some of these tricks by controlling uh the memory allocator to basically add some
+information when we allocate objects and this is a chief moving cpython to a new memory allocator uh call MOG yeah
+exactly like if if the amount of detail so far was already high like no no we have to go deeper we have to go deeper
+before we deallocate things with reference counts getting to zero or uh with garbage collection deciding this
+object is no longer reachable like we have to allocate the memory for a particular kind of object maybe it's a
+dictionary maybe it's just some uh particular uh like you know integer or whatever else so for now python is using
+uh py malog you know some uh wrapper on top of more low-level uh allocators that
+you have on your uh operating system and in fact it's pluggable so you can have an allocator that will help you debug
+things and so on and so on but the core feature of by malog that you know kind of uh allows us to be relatively
+efficient with different sizes of objects we have and so on and so on uh is that it is not internally threat safe
+it doesn't have to be and the reason why is that we have the global Trier lock so we can just use that one to make make
+sure all the allocations are still correct so now with the Gill removed we would be back in the game of making P
+Malo threat safe and more important to still maintain its performance and it
+turns out it would be actually easier to swap out p malok as we understand it right now with an allocator that is
+internally threat save and M malok is one such allocator right I think the me
+in MOG stands for Microsoft this is a Microsoft Project I think so yeah and uh the idea is that not only this is you
+know a thread safe allocator that is very fast and very efficient um it also happens to have a bunch of features that
+we need for ensuring that you know all these operations that need synchronization like appending to list
+and things like that stay fast and the idea here is that for instance MIM aloc allows us to have uh basically private
+hips the idea is that when you call right now by Malo or even Malo it will return you just a bunch of memory so it
+will give you a pointer that points to a region of memory but that can be anywhere like can be the point can have
+any value it can be in any point of memory you have no no control over that uh but the idea is that when you have
+these private hips you have this kind of like like areas of memory when you can allocate some objects there right um so
+basically there is functionality in MOG to say uh I want my pointers for instance for dictionaries only in this
+particular area and then you can ask back MIM Malo tell me okay allow me to you know iterate over all my pointers
+that are dictionaries right it can also be by range right you know that dictionaries are between this memory
+position and these other memory positions so now just by looking at the address of the object or just by asking me Malo you can know if a pointer
+belongs to some region or some other and this allows you to do some tricks with memory uh and this is what we call
+segmentation because you basically you know put objects that you care about together uh in a in a region that is
+different from the others so you can start asking questions and like only iterate over the ones that you want and this turns out that it's going to be
+very important for um the changes that we require yeah so the important feature there is that now like you can use
+private heaps so that uh you know okay those objects that we're looking at are
+garbage collected so we can actually now follow the garbage collected track objects without having to maintain a
+linked list as we're doing right now which this linked list has a very confusing effect to uh you know kind of
+casual users of python where uh ironic even reading an object will sometimes
+write to memory uh and you know that is making kind of cash locality worse and so on and so on so we can now maybe
+solve this issue um as well with mimal but most importantly this is simply faster and this is um you know well
+threat safe right now that you talk about the GC uh this also requires some changes on the GC uh for you know
+More GC changes
+dealing with the whole thing right as we mentioned one of the changes that we need in the GC is that the GC needs now
+to be aware of the Python stack because we are using this the first reference counting so the E is to find out that
+the stack owns a bunch of these references that has not been done yet right but it needs a bunch of other
+changes uh one of the reasons is right now the GC kind of works because um when the GC runs the it holds the global
+interpreter lock so it knows that all of the other threads cannot do anything so it knows that all the reference counts
+are basically Frozen so you can reason about them and actually the algorithm the uses that you can read about it the
+python Dev guide I wrote this document about how the whole DC works but the idea is that uses these reference counts
+to figure out where the Cycles are um but when the moment you don't have the Gil anymore it means that you know we
+don't want the GC to be running at the same time someone else is modifying these reference counts because then the algorithm doesn't work uh which means
+that we still need to stop every single threat this model is called stop the world GC when you basically stop the
+world which is basically what we're doing right now except that in the case when you don't have the guild you need to explicitly say no like now when the
+GC runs only one3 can reason about the reference counts and this provides also a nice sychronization moment to you know
+start to uh solve all this small defer stuff like when you say oh let's do this operation later because you know right
+now is it's too slow to do it all the time so let's put it here and let's do it later so the GC run is one of the
+moments when you can start like you know figuring out all these things that you left uh because because all the threats are stopped so it's this nice to be
+clear like this garbage collector this top the world collection is going to happen only on a single thread right
+there's going to be one thread that is responsible for uh garbage collection right and uh some some changes were are
+made one of them is that right now we have this idea of generational garbage collector with we have different generations for the objects and you know
+objects in older Generations are collected less uh so one of the changes that this pep m is that it reduces the
+number of generations to one um the idea here is that um is basically much easier
+to reason about here and like you don't need to like collect all the single time so it's a matter of like it's a balance
+of performance and um and implementation uh correctness just because the way the
+youc now runs over all the objects is not by you know traversing the link list but asking mealo for all the you know
+traversing the memory rle let's say and this not only you know is simp simpler to do once you have this memory
+allocator cooperating with you but also is much faster uh one of the reasons is because uh when you are traversing a
+link list you are the referencing a pointer every single time you ask for the next object and you know like we
+have these caches in CPUs that make that traversing memory that is continuous is extremely fast and traversing link Le is
+the oppos the opposite of that right yes but when we have all the objects canot like uh or at least when you are
+scanning like continuous memory of the hip uh even if you don't have even you have holes right you can just skip over
+them but you have the entire gut lines fill so you can just keep keep running in a very efficient way over that so
+exactly we have now one generation and when you ask for uh something like GC
+get reference or GC get objects and all of those apis in the GC that allows you to get all the object in the GC we
+manually reconstruct the link list for you because all these apis kind of need to work with linkly so so there is some
+reconstruction needed in the middle that right now is a bit inefficient uh but we can optimize in the future so the
+eval breaker
+interesting thing is like all the threads need to know that okay now there's this Stop The World operation
+like there's a we're doing the garbage collection so what what is the moment in
+which the threads actually synchronize and stop and how do we do this so it turns out python already has a mechanism
+to stop execution in the current thread because another one uh requested the
+Gill that mechanism is called the evil breaker and we could just reuse it to
+make a global garbage collection cycle happen right actually one of the things that we have changed in Python 312 is
+that is precisely that this change uh actually 311 I think also has a change is that the GC only runs on this C
+breaker because before the C the GC Co run every single time you allocate an object or you de allocate objects which
+uh is kind of cool because you know it has a lot of opportunities to execute but on the other hand it's very surprising because you may be you know
+in the middle of preparing your nice object maybe it has three other things inside and in the middle of your
+preparation of the object then the runs and then it hases this all crazy things it de allocates things around so what
+can happen is that it touches your object meat allocation and there is ways to prevent this but it's really hard to
+you know get it right just because you know the GC can run at any point and the GC is very scur because you know it can
+uh execute arbitrary python code when you call the destructors of objects or the finalizers of objects so one of the
+change we did which is unrelated to this work but you know is also used by this is that the GC only runs on the silver
+breaker which is more predictable and thanks to this now that all the threads are stopped right and we we know that
+they're not executing any code like since the Evol breaker is like very kind of elegant as a moment to do this uh we
+can now Traverse all the thread Stacks right and through this we can actually calculate you know like the cycle
+references and do the defer reference counts that you know um some of some of the very popular objects Mark themselves
+as being and you know we can merge the ref Counts from biased reference counting right like so those uh two ref
+count fields from the owner thread and all the other threads to combine it and actually figure out like is this object
+ready to um be freed or not right one clarification as well is that when we said that is a stop the world DC this is
+Stop The World Only um is is is applied to when we are figuring it out what objects are reachable and which objects
+are not once we know you know which objects need to be destroyed the actual distraction themselves is uh is is not
+is not frozen like all the threats can run at the same time destraction happens one of the reasons here is to avoid
+Deadlocks like if you think about this um quite a lot it turns out that you know you can have different Deadlocks if
+threats are still you know waiting for the G to happen and then you hit one of these finalizers that is waiting for
+some operation to finish then basically you you are not advancing so so this means that when you start destroying objects you need to allow other threats
+to continue otherwise you can have the locks that you right now don't have so it's not the end of the war and this
+also makes the destruction phase faster because you know other War can continue meanwhile with destroy objects which
+also make it very tricky because you know many things can go wrong in this pH but but you know it's not as low as as a
+hugest of the world that waits for everything to be destroyed before continuing yeah the ordering of the um
+destructions is might be a little you know kind of non obvious uh but we know that when when the objects are now like
+ready to be freed um that doesn't have to stop the entire rest of the program to uh ex from execution meaning it's
+faster so you know kind of it combines this nice intersection of correctness avoiding the Deadlocks if you have like
+dunderdale like you know some some particular complex uh deallocation and
+speed uh so that's maybe a good segue to talk about the performance of
+Thread-safe standard collections
+Collections and how we need to make those threats safe as well now right
+this is actually when things start if you think this was already very complicated just wait until you hear
+about this section because this is just banana um so the idea here is that you know we we have protected reference count using
+these like smart ideas but now you still have problems like for instance as we mention we go back to the problem when
+you are appending to the list at the time at the same time you remove from the list or two threads are one is
+removing keys from a dictionary is accessing the dictionary so what's going to happen there right turns out that the
+solution is to just add a ton of locks to everything and there is no other solution because when you access uh
+these objects you need synchronization so you need to Ure sure that only one object only one thread can access these
+objects just to ensure that you know the status internal is correct and that's it and unfortunately as you can imagine
+adding tons of tiny locks to everything even if the locks themselves are really fast is really slow and the whole like
+section of like how the pep uh you know talks about this is just to avoid maybe
+locking like the because again it's a very slow operation in some cases and basically is the balance here is you
+trade um you know speed so that's what you gain by adding a huge amount of you
+know complexity to the code so that's the you know if you have heard about like the balance between speed and
+memory uh wait until you he about the balance between maintenance complexity and and speed right that's the other
+that's the other side of the coin so to be clear like we're talking about the internal code of The Interpreter right
+where uh the additional complexity that we're creating uh is partially just
+necessary for correctness but partially also necessary for kind of predictability with what people
+understand as python like as is right now so as uh pabl already mentioned there are a bunch of operations that
+could feasibly just return exceptions when some operation fails to be completed in a parallel way because
+there was some rays with something else but we uh don't want to change how people program python it would be very
+disruptive if things that you used to actually succeed like stop uh succeeding it is already pretty uh kind of um
+annoying to python users right for user code to have to deal with containers
+changing size during iteration and whatever and whatever so like if if we had like another new class of exceptions
+risen uh in this sort of situation it would for sure be unpopular so in the
+end we actually have to have new locks and some of the time like the the number of new necessary locks is pretty high
+you know like there's very uh popular operations in Python when you're kind of
+converting one container into another like you know having a list of sets and whatnot so now we're going to have to
+lock both of those and that obviously creates opportunity for deadlocking when there's more than one lock and so on and
+so on uh so this is something that maintainers of cpython are not entirely
+excited about because this is a new class of complexity that we didn't have
+to deal with before right there is some operations that they don't require the full locking mechanisms which again is
+Fast paths vs. slow paths
+the slowest version of synchronization for instance if you are asking for how how big is a list like the length of a
+list that requires you don't require locking because that is only reading and integer that is kept by the list so as
+long as you know operations that appen and remove are synchronized reading this is you just need an atomic read so which
+is a bit faster but it's still you know not as fast as just reading a regular integer um but in in general like you
+require looking even for as gu mentioned several containers at the same time so uh basically what the pep tries to do is
+to introduce this um like optimizations of top liing the fact that we control
+the memory allocator to avoid locking in some of the cases and the cases that we are going to try to avoid locking is
+precisely the cases that are more common in Python for instance accessing dictionary objects right when you have a
+dictionary and then you have a key and you access the key so basically you get the an item from the dictionary this needs to be fast because otherwise
+python is going to be very very slow and and the same for other things like you know getting elements from list like
+calling next on iterators and checking if some element is in a container all these things happen all the time and
+then there is these tricks that that the pep tries to do to avoid using the heavy lock Machinery uh to lock around this
+objects and do it avoiding locking is um not something that is generally possible
+every time but there are algorithms that are known like for us to be able to
+avoid a lock in a particular well understood case uh and we have a bunch
+of those um you know kind of there is a lot of operations that have uh like a
+very predictable happy case and complex hge cases so now we're going to be splitting U implementation of those
+operations into this fast path that like will not employ locking but if we uh
+identify that we are reaching an edge case we're going to go into this full correct but slow slow path right like
+for instance one of the changes that this does is is based on what is called RCU which stands for read copy update
+semantics which is a trick that is used by the Linux kernel to do a scalable um
+you know access to unsynchronized Containers which is is is a bit complicated but the idea here is that
+for instance if you are accessing an element of a list there is two main operations that you need to do one of them is you know increasing the
+reference count of of the whole thing and then you need to fetch the element and these two operations are not Atomic
+which means that something can happen in the middle for inance something can destroy the list before you you know
+access the element or something can add add a new element to the list so the one that you were trying to access is in a different place because someone has
+moved the buffer right because when you add elements to a list it may be in the same buffer but sometimes when you you
+know the list is full and it needs to reallocate it movees the buffer somewhere else so the bter that you have right now is not the one that you you um
+that you used to have so the idea here is that there is a bunch of like if you listen to this it's going to sound Hocus
+Pocus so you need to kind of sit down and think about and read a lot about this so don't just trust us for what
+we're going to see um but the idea here is that do you have a um a really fast path that basically what it does is that
+it does a bunch of atomic operations so basically it automically loads the list buffer for instance and then you
+automically load the element in the buffer so basically you get first the the you know internal array that holds
+the python object in the list atomically and then you automatically also get um uh the element inside the Ray and it
+turns out that that is not enough because some of these operations May Fail uh the the in you know in trying to
+increment the reference of the object can also fail um and then there is also like some other threes can do things in
+the middle of these two operations because like even if one each one is atomic both of them are not Atomic as a
+hole so you need to do a bunch of checks after that so for instance you need to check if one of these operation fails or
+like you need to check again if the item that you got is uh you know is still there so you you get it again and then
+you check that indeed the item that that you got is still there and you also need to check that the buffer is still there
+in buffer and no nothing has you know appended to the list and Chang the buffer and if all of these things are true then you don't need to lock you
+just pay two atomics Atomic fetches and that's kind of nicer that you don't need to lock but if one of these fails then
+you need to go back to the low path that you know uses the entire lock and you know ask for the whole thing um this
+Reading freed memory with mimalloc is kinda okay?
+actual trick works because if you think about it enough uh or you pretend that you understand what I just said uh this
+is not enough uh because you know some of the things can happen in the middle spe specifically when some objects are
+destroyed in particular you may be reading for free memory and that is still you know obviously not good
+because re for fre memory is is undefining Behavior Uh and what happens is that this actually works just because
+we control the allocator and and we we have modified mimo to a bunch of things
+that allow us for these operations to make sense in a way right so even if the memory may be freed you can still read
+some of these values particularly reference count uh from memory and those will be valid yeah mimal uses pages that
+are you know blocks of the same size so even if that is freed memory okay yes that that object is no longer valid but
+you at least know that the structure of the object that the bites will still make sense that you're not going to have
+like uh kind of fields that you read as say reference count and it's suddenly like entirely different data meaning
+like those for example special bits that we talked about would be like insane values right so you can still kind of um
+read this outd memory right because it's no longer current but at least you know
+it is not entirely different information I mean it might be but only in the case
+where uh you know there are no blocks allocated within the entire page then mimo can say okay like this entire page
+can be used for something entirely different right and this is like the whole key like the IDE is that we we
+have some modifications of top mimo that avoids mimo reusing these Pages for something else because obviously if you
+start writing to these Pages after the object is the located you may end with a totally different thing when you read to
+it and you don't want that you still want to ensure that whatever you you read is either you know the reference
+count that you have or zero right exact so so you have like control over what can happen and this means that we need
+to basically lock without an actual lock right this is just lock as the English word not the the data structure um we
+need to lock the page and say uh you know as long as we are trying to still read from this page you can mimo cannot
+touch this he cannot just return the page back to the system or to the allocator to reuse it for something else
+um and this is kind of nice because you know this trick works and then we can have this fast access which is also working because um you know we we don't
+lock random Pages we use this trick that we mentioned before of segmenting memory in different AR uh different hips as
+mimo calls them to ensure that you know dictionaries go with dictionaries and and you know GC object go with GC objects and whatnot um so this allow us
+to to efficiently be able to lock these Pages for um you know not reuse by mimo
+but this leaves the problem that how when we unlock these pages right because you know okay so you say don't touch
+this page because we need to read it still but at some point we need to say okay this page can again be used because
+otherwise you need to lock an entire page of mimo every single time you you do this operations which you know may
+have a huge impact on memory and we don't want that and by the way one clarification here when we talk about
+mimo Pages this is not the the operative system pages right so this is not 4K you
+know regions of space it's just an internal mimo structure that can you know have different sizes and whatnot so
+it's not like for when we say Pages you don't think of about these 4K regions you think about like some internal data
+structor that yeah it's a it's like a subset of one of those heaps that we were talking about like inside uh inside
+mimo so like you know Heap um the the Heap in general is not accessible with
+the regular malok like you know you can kind of not decide where you want the memory C to come from you're just
+getting a pointer back uh with Mimo we have Heap segmentation so we can actually decide like you know kind of oh
+this is a object that is garbage collected so it should live somewhere else than other objects so that we can
+be faster at you know kind of actually following uh all this garbage collection information when we're doing the stop
+the world collection uh so how many heaps do we actually have now I think we have mainly three heaps plus some
+specific like um internal ones but the main three hips are uh like all the
+object that don't participate in GC go into its own like you know buet of memory then we have two hips for the GC
+objects and this is just because um there there is this concept of manage dicks um the idea here is that if you
+have a normal python class python knows how to man manage the internal dictionary uh and we actually have these
+optimizations that Mark shanon did with in other Sun um that basically don't
+create the dictionary if it's not needed and this is quite cool because like most of the time when you're accessing an object uh you know having to use a
+dictionary access and has the thing and all of these things is quite slow and uses more memory uh because you know
+most of the time you are not looking at the actual dictionary of the class uh which is normally accessible uh in you
+know object under dict um so so we have these operations internally that speed up access but um you know C extensions
+uh can still um you know use uh like internal layouts of the glasses and you
+know use the fact there is a dictionary there and access the dictionary as a dictionary and also users can also do
+like dot Dunder dict in which case we need to create the dictionary for them if it's not there and C extension can
+still use a dictionary normally so for those C extensions and other cases uh python uses this idea of manage dicks
+which basically says okay so I'm not managing the dictionary internally so I cannot do all these fancy tricks um you
+do it and for those it turns out that you know for internal details about how these DC objects work and you know what
+we can and cannot do they go into their own hip so basically we have three hips non GC GC with managed dicks GC without
+manage dicks um so that that's the that's the main segmentation that we right yeah so like potentially if you
+have this change to Mimo where uh we still want to look at reference counts
+of objects even though they're already deallocated uh and that keeps the entire
+page potentially still in memory like in a very unlucky scenario you can have a
+lot of those pages alive meaning the memory use of python is going to be way
+higher than it should have been right so like we have to have some way to alleviate with that problem so that we
+don't have to wait until the next garbage collection cycle uh to reclaim this memory otherwise we could just be
+killed by our hypervisor like when the uh container is suddenly you know like
+requesting too much memory or within Linux you would have like you know this o killer kill your process before you
+have a chance to actually clean up after yourself uh so what do we do to actually make this less of an issue right this is
+when the whole thing start become even more complicated so the the idea to basically get rid of these pages that
+are locked and just to make you know uh the container access unsynchronized well not un synchronized but without locks a
+bit faster um it uses an approach that is used by the FreeBSD operative system
+called uh Global unbounded sequences um we we actually we were like looking at
+this and explaining this thing in a podcast is probably like to complicated I will give you an idea of how it works
+but this uses the war counter four times in different ways so you know it's just the third time I'm going to say counter
+your head is going to explode um like mine did so but the idea here is that um to ensure that you know we know when
+these Pages need to be uh can be reclaimed and reused again uh because we are not locking them um basically there
+is like a like a bunch of counters uh which acts as like generations and basically there is like a right counter
+and a read counter and every thread basically keeps track of the last counter it has seen and every time we
+lock one of these Pages uh in these faster Atomic uh you know operations well not Atomic operations but the
+container operations um we Mark that page with one of these counters and then there is some logic that every thread
+uses to look at the counter in the page and the counter that it has seen and there is some conditions when it knows
+that it's safe to actually uh you know unlock the page because it knows that on those conditions nobody actually you
+know is going to read at that page and it can be actually ruse right like the the condition can actually be checked
+just by comparing these numbers but you also need the logic to keep these numbers up to date and you know increase the global counter and whatnot well like
+Specializations become harder to implement without the GIL
+if the Gil is being controversial for a group of python Cav one group that was
+especially worried was the faster C python team because the specialized interpreter that they were working on uh
+relied on the go lock to make sure that the specializations as they are happening were still produced in the
+right moment and nobody else could actually come in you know in the middle of the specialization and break
+everything so now there's some changes in the specialized interpreter that are
+required to live in a world where uh there is no Gil anymore so for example
+like we have specializations uh and they can only actually happen for a piece of
+bite code once but more importantly we have a mutex now that uh when the
+special ation would be happening uh but the mutex is actually held like we avoid
+multiple threads writing to the inline cache at the same time this is obviously something that has impact on uh
+specialization performance because that mutex didn't exist before but the Locking does Ensure we have this
+consistently cached right so like the two tags that we keep like they're uh consistent with one another uh so yeah
+this is essentially making the work of the faster python team more complicated
+uh to still achieve specialization but to make sure that um you can run multiple threads now actually in
+parallel right and and this is actually a interesting aspect of this because this was adapted to 312 because when Sam
+did the first version there was not an Adaptive interpreter so the first version of this work didn't have to deal
+with this particular version and now you know the pep was modified after this to to account for this so so this is an
+area that you know we can improve over time and we don't need to be as aggressive and as you know um like
+cautious regarding these optimizations also as said by the fasy python team uh
+this is a new real right because like normally what you get uh in the literature is that you get all these
+like you know papers and strategies when you have some form of locking uh or you have free threading but like having an
+Adaptive interpreter in the presence of a free threading is kind of a new thing or at least there is not as much you
+know Research into that which means that there is less known approaches that you can do in this case so so the whole
+thing becom a bit more complicated because now you're dealing with two very complicated aspects and it becomes even
+more complicated if you have a justing time compiler in the mix because you know the Jing time compiler need to
+generate this native code and it needs to do this thing in a kind of synchronized way so two threads don't
+generate different kind of code just because one thread is used in one function for floats and the other thread is using the same function for integers
+so those those kind of uh you know optimization need to happen in some coordinated way which makes the whole
+thing a bit more difficult because now you know both approaches need to know about each other which means that you
+know it's going to be very important moving forward that uh everyone talks to everyone in the coure team right because
+you know you cannot just do the noil stuff in one way and you know try to optimize python to make it faster in the
+other way now now both you know everyone needs to talk about to talk with everyone just to ensure that you know we
+we keep ourselves synchronized so so you know we we don't race with each other uh when the CH that we do to python right
+PEP 703 terms of acceptance
+and this brings us back to the terms of acceptance of Pep 703 obviously there are still many details about how noil
+works we could talk about how the CI has this concept of borrowed references and
+how they're actually making everything way harder to uh reason about with the
+presence of free threading we could talk about the method resolution order that is used to figure out which particular
+method version in a class that has an inheritance KY should be used and how
+that needs to be sped up uh with the presence of free threading while still
+maintaining correctness so there's many other details that are interesting but we reached the hour on the episode right
+now so maybe yeah like maybe let's actually go more high level once more
+and just uh talk about like what the acceptance of the pep 703 really means
+right because of what I think actually helped the steering Council make the decision to accept this uh change to be
+made was this reframing of the problem from let's remove the Gill let's just go
+and you know like make this huge change into let's make it possible for users to
+build a version of python that does not include the Gil that way we can allow
+the users to experiment with the resulting um interpret produce free
+threading versions of numai CPI and so on and so on so that you can actually
+see whether this helps with scalability whether this helps or hurts performance in the real world and more importantly
+does it introduce this new scary class of free threading errors that like you
+know so far we didn't really have uh in Python while we did have them to some
+extent but since threading was so crippled it was relatively uh little used right right so now there's a whole
+new world everybody wants to have answers to those questions like you know is this going to be awesome or terrible
+and we cannot really you know use any Clairvoyance here we really just need to test this so what pep 703 says is let's
+allow the configure script to have an option where we're building without the global interpreter lock but that is not
+entirely compatible with the version of python that was uh built with uh the
+gild or actually now we're going to have to think about the changes made for
+nogil all the time even with if we're using the version with the glob and dper lock so what's going to happen to the C
+API yeah that's actually something that that is very important to remark here because a lot of people think like oh
+No free lunch
+you know the cyon team is removing the guild so it's going to be free launch and actually due to these things that
+gash is mentioning um like this is going to be challenging for a lot of people this means that you know maybe if you
+have pure python code you don't need to think that much about it especially if you know you you have proper
+synchronization already in the presence of python threats uh but like C extensions will need to think a lot
+about this because as gash mentioned at the beginning of the podcast right now C extensions can be really happy because
+they know that you know only one threat can manage their objects at the same time but this is not true anymore which
+means that now you need lock in almost everywhere or some other strategy or at least you need to think about it and the
+problem is that thinking about this multi thr problems is not is not too easy because even if there are some
+tools like you know threat sanitizer and Hill grind and things like that there is nothing that will tell you you know you
+have a problem here and you need to put a lock here unfortunately right and even less in the presence of all these tricks
+that we are doing so this means that you know one of the reasons we are doing this thing very slowly is for
+understanding how challenging is for C extensions to be compatible with no Gil and try to see if this is actually
+something that the community wants to pay because the community will pay some things right for instance as guas was
+asking like what happening with the Capi well we mean this means that noil needs an entire different Capi maybe it's not
+a huge area of like functions that are changing you know parameters and names and things like that but that some apas
+that we offer are not valid anymore with no Gil and on on turn you need to change the semantic of some other apis for
+instance the apis that Acquire The Gil and release the Gill obviously they're not valid anymore if there is no Gil and
+so they need to do something slightly different um also like you know all these
+[Music]
+[Music]
+and is in the accept them notice so we wrote this super long text that I invite you to read in the Discord uh discourse
+uh python um web page uh when we basically list all the conditions that
+we require for you know going forward with this change and one of the things that we mention is precisely this idea
+of having two c apis and how we may not want to have this thing when we move faces so you know people don't need to
+build two versions of the same thing and we only have once so this is a tricky thing because obviously this means that
+uh when we merge both CI let's say into the same one it means that um you know
+all Wheels won't work for the new thing because it's a new entire like you know um binary tag and whatnot um but it
+means that you know moving forward people won't need to create these two different things for everything right so there is a lot of aspects that are very
+complicated um and especially regarding the C API so there is changes that are required there is semantic changes that
+you need to do there is a lot of thinking that you need to do if you want to ensure that your C extension works with um noil sometimes it's going to be
+very easy uh other times especially if your C uh library is very big is going to be very challenging um and um you
+know maybe doing uh this in languages that are a bit more careful with threaded like R maybe a bit easier but a
+lot of time you still need to do a lot of work because normally all these interactions with the c API happening
+unsafe code in R so you still can have like weird things happening there that the Bor check is not going to protect
+you against um so so and then you have all these backs that gas was mentioning on top of that right because if you you
+when you're doing these changes you do them incorrectly you may run into that loocks you may run into light blocks you
+may run into crashes um and which are also very hard to the back because you know when you are doing this defer
+reference counting it means that when the back uh is seen it already happen long ago it's just when you know when
+when the thread merges the reference counting now it's bad so so you need to use this super Advance the bagger like RR the reverse the bagger just to
+understand what happened going backwards so so you know it's going to be an interesting time uh I don't want to
+scare people you know we are close to Halloween as we said before um this doesn't mean that it's
+impossible is just that you know you need we need to take this thing as a community in mind because uh many people
+are looking at the change and it's like oh nice we finally have it well yes and all this pain as well right know it
+comes in the same package yeah so um it's it's important to it's definitely a radical change uh one kind of um reason
+It's now or never
+why it was a good time for this or maybe if it wasn't the best time it was the
+only time was that we did have some grosses um like no guil branch that was
+a proof of concept of this actually being successfully implemented and performant enough for us to consider uh
+and we might not get there in the future again right if we don't uh attempt
+removing the Gil right now with the heavy changes that are made for the
+specialized interpreter for the Justus in time compiler and so on and so on um
+this kind of experiment with removing the go interpreter lock becomes harder
+and harder to execute so having this branch that already shows us okay this
+is feasible this is already done is something that we really need to kind of take into account since we cannot just
+leave the branch there for a year or two it would become stale it would become unusable for us uh hence even though
+there is so much change in terms of performance uh on the Microsoft steam uh and we actually didn't have much other
+choice than to um like start the nogal uh experiment at the very same time that
+requires a lot of coordination this is will require a lot of work um but you know there is plenty of opportunity for
+this to be the most kind of radical Improvement in the quality of The Interpreter that we've seen in decades
+so uh there is plenty of opportunity for python to reclaim its position in this
+orchestrating language where uh it stops being the bottleneck for uh like not
+even executing its own uh kind of pure python code but for executing other code
+on CPUs and increasingly on gpus where they can be fast enough that even
+orchestration from Python and now is affecting what you you can do uh compared to running it without The
+Interpreter so yeah like hopefully we're going to be uh feasible and we're going to be still kind of considered um like
+you know kind of um modern technology into the future if we build 313 with
+noil and the users uh find that okay like maybe there's issues but they're
+worth it because the compromise of allowing scalability is uh converting
+this uh language into something much more powerful right uh maybe something
+Outro
+that we can do in the future is to actually bring some grow himself here to just tell us everything that we said
+that is incorrect so you know every mistake that we have made just reach to
+us if if you this is something that you would like to hear uh in the podcast right uh or if we did go a little too
+deep uh or maybe not enough like just let us know what we can improve uh such
+that the level of uh the detail like is what you're expecting in the future uh
+yeah it was a very exciting uh episode to do because like the pep was just
+accepted uh officially so now the real work can begin with uh The Continuous
+integration you know actually building no Gill on our end with new build Bots
+with the entire team uh actually having to Now read up on pep 703 and how to
+make their change thread safe for from now on uh there's still a lot of unknowns even on our end like what is
+the extent to which we're going to have to adopt the stand Library a lot of which being just pure python but a lot
+of it is marked explicitly as not threat safe what are we going to do with that are we going to adopt all the ASN apis
+that don't uh claim threat safety or are we going to leave them and make the
+users worry about that and so on and so on so there are uh still like a lot of
+challenges like let's call them challenges not problems wow talking like a manager so this is everything that we
+have for you at Le in hour and something like 10 minutes that we we are already um so we hope that you enjoy it and we
+hope to see you in the next episode yeah see
+[Music] you
+[Music]
+[Applause] [Music]
+for
+for
