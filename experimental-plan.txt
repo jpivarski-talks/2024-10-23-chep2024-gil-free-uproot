@@ -6913,41 +6913,41 @@ python uproot-typical.py 13 not; python uproot-typical.py 5 not; python uproot-t
 
 python uproot-easy.py 13 mm; python uproot-easy.py 5 mm; python uproot-easy.py 14 mm; python uproot-easy.py 6 mm; python uproot-easy.py 2 mm; python uproot-easy.py 7 mm; python uproot-easy.py 12 mm; python uproot-easy.py 10 mm; python uproot-easy.py 3 mm; python uproot-easy.py 8 mm; python uproot-easy.py 1 mm; python uproot-easy.py 9 mm; python uproot-easy.py 11 mm; python uproot-easy.py 15 mm; python uproot-easy.py 4 mm; python uproot-easy.py 16 mm
 
-13 <class 'uproot.source.file.MemmapSource'> 9.824172649998218
-5 <class 'uproot.source.file.MemmapSource'> 12.936378218997561
-14 <class 'uproot.source.file.MemmapSource'> 9.812644438999996
-6 <class 'uproot.source.file.MemmapSource'> 11.745848683000077
-2 <class 'uproot.source.file.MemmapSource'> 25.48194209000212
-7 <class 'uproot.source.file.MemmapSource'> 10.927943008005968
-12 <class 'uproot.source.file.MemmapSource'> 9.780306690998259
-10 <class 'uproot.source.file.MemmapSource'> 10.02379617599945
-3 <class 'uproot.source.file.MemmapSource'> 18.376605741003004
-8 <class 'uproot.source.file.MemmapSource'> 10.390077121999639
-1 <class 'uproot.source.file.MemmapSource'> 45.88206718899892
-9 <class 'uproot.source.file.MemmapSource'> 10.174233850993915
-11 <class 'uproot.source.file.MemmapSource'> 9.945451081999636
-15 <class 'uproot.source.file.MemmapSource'> 9.799103158002254
-4 <class 'uproot.source.file.MemmapSource'> 14.830694169999333
-16 <class 'uproot.source.file.MemmapSource'> 9.845973457006039
+13 MemmapSource 9.824172649998218
+5 MemmapSource 12.936378218997561
+14 MemmapSource 9.812644438999996
+6 MemmapSource 11.745848683000077
+2 MemmapSource 25.48194209000212
+7 MemmapSource 10.927943008005968
+12 MemmapSource 9.780306690998259
+10 MemmapSource 10.02379617599945
+3 MemmapSource 18.376605741003004
+8 MemmapSource 10.390077121999639
+1 MemmapSource 45.88206718899892
+9 MemmapSource 10.174233850993915
+11 MemmapSource 9.945451081999636
+15 MemmapSource 9.799103158002254
+4 MemmapSource 14.830694169999333
+16 MemmapSource 9.845973457006039
 
 python uproot-easy.py 13 not; python uproot-easy.py 5 not; python uproot-easy.py 14 not; python uproot-easy.py 6 not; python uproot-easy.py 2 not; python uproot-easy.py 7 not; python uproot-easy.py 12 not; python uproot-easy.py 10 not; python uproot-easy.py 3 not; python uproot-easy.py 8 not; python uproot-easy.py 1 not; python uproot-easy.py 9 not; python uproot-easy.py 11 not; python uproot-easy.py 15 not; python uproot-easy.py 4 not; python uproot-easy.py 16 not
 
-13 None 16.597702600993216
-5 None 19.389530205000483
-14 None 16.578941810003016
-6 None 18.081441816000734
-2 None 31.644254915998317
-7 None 17.416213778000383
-12 None 16.69787936999637
-10 None 16.81092931499734
-3 None 24.70439708699996
-8 None 16.99961976299528
-1 None 52.671517272996425
-9 None 16.640721805000794
-11 None 16.646408902000985
-15 None 16.583125946999644
-4 None 21.24739167199732
-16 None 16.834511084998667
+13 FSSpecSource 16.597702600993216
+5 FSSpecSource 19.389530205000483
+14 FSSpecSource 16.578941810003016
+6 FSSpecSource 18.081441816000734
+2 FSSpecSource 31.644254915998317
+7 FSSpecSource 17.416213778000383
+12 FSSpecSource 16.69787936999637
+10 FSSpecSource 16.81092931499734
+3 FSSpecSource 24.70439708699996
+8 FSSpecSource 16.99961976299528
+1 FSSpecSource 52.671517272996425
+9 FSSpecSource 16.640721805000794
+11 FSSpecSource 16.646408902000985
+15 FSSpecSource 16.583125946999644
+4 FSSpecSource 21.24739167199732
+16 FSSpecSource 16.834511084998667
 
 ===============================================================================
 
@@ -7940,38 +7940,38 @@ python -Xgil=0 uproot-typical.py 13 not; python -Xgil=0 uproot-typical.py 5 not;
 
 python -Xgil=0 uproot-easy.py 13 mm; python -Xgil=0 uproot-easy.py 5 mm; python -Xgil=0 uproot-easy.py 14 mm; python -Xgil=0 uproot-easy.py 6 mm; python -Xgil=0 uproot-easy.py 2 mm; python -Xgil=0 uproot-easy.py 7 mm; python -Xgil=0 uproot-easy.py 12 mm; python -Xgil=0 uproot-easy.py 10 mm; python -Xgil=0 uproot-easy.py 3 mm; python -Xgil=0 uproot-easy.py 8 mm; python -Xgil=0 uproot-easy.py 1 mm; python -Xgil=0 uproot-easy.py 9 mm; python -Xgil=0 uproot-easy.py 11 mm; python -Xgil=0 uproot-easy.py 15 mm; python -Xgil=0 uproot-easy.py 4 mm; python -Xgil=0 uproot-easy.py 16 mm
 
-13 <class 'uproot.source.file.MemmapSource'> 9.424774745002651
-5 <class 'uproot.source.file.MemmapSource'> 12.76675399099986
-14 <class 'uproot.source.file.MemmapSource'> 9.241204064001067
-6 <class 'uproot.source.file.MemmapSource'> 11.44970464400103
-2 <class 'uproot.source.file.MemmapSource'> 26.416630285999418
-7 <class 'uproot.source.file.MemmapSource'> 10.689936761002173
-12 <class 'uproot.source.file.MemmapSource'> 9.525186879000103
-10 <class 'uproot.source.file.MemmapSource'> 9.765235386999848
-3 <class 'uproot.source.file.MemmapSource'> 18.634904406000715
-8 <class 'uproot.source.file.MemmapSource'> 10.119304739000654
-1 <class 'uproot.source.file.MemmapSource'> 49.90675139099767
-9 <class 'uproot.source.file.MemmapSource'> 9.883504535999236
-11 <class 'uproot.source.file.MemmapSource'> 9.635315425999579
-15 <class 'uproot.source.file.MemmapSource'> 9.240718678000121
-4 <class 'uproot.source.file.MemmapSource'> 14.884990222999477
-16 <class 'uproot.source.file.MemmapSource'> 9.074809541998548
+13 MemmapSource 9.424774745002651
+5 MemmapSource 12.76675399099986
+14 MemmapSource 9.241204064001067
+6 MemmapSource 11.44970464400103
+2 MemmapSource 26.416630285999418
+7 MemmapSource 10.689936761002173
+12 MemmapSource 9.525186879000103
+10 MemmapSource 9.765235386999848
+3 MemmapSource 18.634904406000715
+8 MemmapSource 10.119304739000654
+1 MemmapSource 49.90675139099767
+9 MemmapSource 9.883504535999236
+11 MemmapSource 9.635315425999579
+15 MemmapSource 9.240718678000121
+4 MemmapSource 14.884990222999477
+16 MemmapSource 9.074809541998548
 
 python -Xgil=0 uproot-easy.py 13 not; python -Xgil=0 uproot-easy.py 5 not; python -Xgil=0 uproot-easy.py 14 not; python -Xgil=0 uproot-easy.py 6 not; python -Xgil=0 uproot-easy.py 2 not; python -Xgil=0 uproot-easy.py 7 not; python -Xgil=0 uproot-easy.py 12 not; python -Xgil=0 uproot-easy.py 10 not; python -Xgil=0 uproot-easy.py 3 not; python -Xgil=0 uproot-easy.py 8 not; python -Xgil=0 uproot-easy.py 1 not; python -Xgil=0 uproot-easy.py 9 not; python -Xgil=0 uproot-easy.py 11 not; python -Xgil=0 uproot-easy.py 15 not; python -Xgil=0 uproot-easy.py 4 not; python -Xgil=0 uproot-easy.py 16 not
 
-13 None 15.677327389999846
-5 None 19.24547866300054
-14 None 16.435240097998758
-6 None 18.508096484998532
-2 None 33.7611019879987
-7 None 17.909479554000427
-12 None 15.817716262998147
-10 None 15.599392209001962
-3 None 26.10267138999916
-8 None 16.867974447999586
-1 None 60.0708828909992
-9 None 16.38504439299868
-11 None 16.242958571998315
-15 None 16.255379204001656
-4 None 22.1854385810002
-16 None 15.56872584499797
+13 FSSpecSource 15.677327389999846
+5 FSSpecSource 19.24547866300054
+14 FSSpecSource 16.435240097998758
+6 FSSpecSource 18.508096484998532
+2 FSSpecSource 33.7611019879987
+7 FSSpecSource 17.909479554000427
+12 FSSpecSource 15.817716262998147
+10 FSSpecSource 15.599392209001962
+3 FSSpecSource 26.10267138999916
+8 FSSpecSource 16.867974447999586
+1 FSSpecSource 60.0708828909992
+9 FSSpecSource 16.38504439299868
+11 FSSpecSource 16.242958571998315
+15 FSSpecSource 16.255379204001656
+4 FSSpecSource 22.1854385810002
+16 FSSpecSource 15.56872584499797

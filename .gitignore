@@ -13,3 +13,5 @@ main.synctex*
 main.toc
 main.vrb
 _minted-main
+
+.ipynb_checkpoints
