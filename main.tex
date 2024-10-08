@@ -32,7 +32,7 @@
 \definecolor{darkgreen}{rgb}{0,0.6,0}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
 
-\title[2024-10-23-chep2024-gil-free-uproot]{GIL-free scaling of Uproot with Python 3.13 subinterpreters}
+\title[2024-10-23-chep2024-gil-free-uproot]{GIL-free scaling of Uproot in Python 3.13}
 \author{Jim Pivarski}
 \institute{Princeton University -- IRIS-HEP}
 \date{October 23, 2024}
@@ -56,14 +56,127 @@
 
 % START START START START START START START START START START START START START
 
-\begin{frame}{First slide}
-\vspace{0.5 cm}
-HERE
+\begin{frame}[fragile]{What is Python's Global Interpreter Lock (GIL)?}
+\Large
+\vspace{1 cm}
+\begin{onlyenv}<1>
+\begin{center}
+\includegraphics[height=5 cm]{img/python-gil-meme-1.jpg}
+\end{center}
+\end{onlyenv}\begin{onlyenv}<2>
+\begin{center}
+\includegraphics[height=5 cm]{img/python-gil-meme-2.jpg}
+\end{center}
+\end{onlyenv}\begin{onlyenv}<3>
+\begin{center}
+\includegraphics[height=5 cm]{img/python-gil-meme-3.png}
+\end{center}
+\end{onlyenv}\begin{onlyenv}<4>
+\begin{minted}{c}
+pthread_mutex_lock(&global_interpreter_lock);
+
+PyEval(python_bytecode_instruction);
+
+pthread_mutex_unlock(&global_interpreter_lock);
+\end{minted}
+\end{onlyenv}\begin{onlyenv}<5>
+\includegraphics[width=\linewidth]{img/new_gil.png}
+
+\normalsize
+\textcolor{blue}{\url{https://github.com/zpoint/CPython-Internals/blob/master/Interpreter/gil/gil.md}}
+\end{onlyenv}
 \end{frame}
 
-\begin{frame}{Long history of the GIL}
+\begin{frame}{\mbox{ }}
+\Large
 \vspace{0.5 cm}
+\begin{center}
+Python 3.13.0 was released 16 days ago.
+
+\vspace{1 cm}
+\uncover<2>{It includes two new features for avoiding the GIL.}
+\end{center}
+\end{frame}
+
+\begin{frame}{Method \#1: subinterpreters}
+\large
+\vspace{0.5 cm}
+\begin{columns}
+\column{1.1\linewidth}
+\includegraphics[width=\linewidth]{img/thread-interpreter-process.pdf}
+\end{columns}
+
+\vspace{0.5 cm}
+\uncover<2>{Pre-3.13 trade-off: shared memory + GIL in multithreading or shared-nothing + true parallel-processing in multiprocessing. Now we have an in-between option.}
+\end{frame}
+
+\begin{frame}[fragile]{Method \#1: subinterpreters}
+\vspace{0.35 cm}
+\scriptsize
+\begin{minted}{python}
+from test.support import interpreters
+from test.support.interpreters import queues
+
+def in_subinterp():
+    # Need to re-import; this is in its own little world...
+    from test.support.interpreters import queues
+
+    in_queue = Queue(in_id)      # in_id comes from global scope
+    out_queue = Queue(out_id)    # out_id comes from global scope
+
+    x = queue.get()
+    out_queue.put(x + number)    # number comes from global scope
+
+in_queue = queues.create()
+out_queue = queues.create()
+
+subinterp = interpreters.create()
+subinterp.prepare_main({"in_id": in_queue.id, "out_id": out_queue.id, "number": 42})
+subinterp.call_in_thread(in_subinterp)
+
+in_queue.put(100)
+assert out_queue.get() == 142
+\end{minted}
+\end{frame}
+
+\begin{frame}{Method \#1: subinterpreters}
+\Large
+
+\begin{center}
+Many modules, like NumPy, can't be used in a subinterpreter yet!
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Method \#2: free-threading}
+\vspace{1 cm}
+\large
+
+\begin{minted}{bash}
+cd Python-3.13.0/
+./configure --disable-gil
+make
+make install
+\end{minted}
+
+\vspace{1 cm}
+\uncover<2>{Free-threaded Python is a separate ABI, ``{\tt cp313t}'', rather than ``{\tt cp313}''.}
+
+\vspace{0.25 cm}
+\uncover<2->{They have to explicitly opt-in to it.}
+\end{frame}
+
+\begin{frame}{Free-threaded Python has been discussed for a long time}
+\vspace{0.5 cm}
+\begin{columns}
+\column{1.1\linewidth}
 \includegraphics[width=\linewidth]{img/googletrends-gil-timeline.pdf}
+\end{columns}
+
+\vspace{0.5 cm}
+\uncover<2->{Five forked Pythons, in 2000, 2008, 2013, 2017, 2021, experimentally disabled the GIL.}
+
+\vspace{0.25 cm}
+\uncover<3->{Until recently, they all made single (and sometimes multi) threaded performance worse.}
 \end{frame}
 
 \begin{frame}{Scaling of pure Python computations}
