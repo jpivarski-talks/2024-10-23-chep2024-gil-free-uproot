@@ -58,7 +58,7 @@
 
 \begin{frame}[fragile]{What is Python's Global Interpreter Lock (GIL)?}
 \Large
-\vspace{1 cm}
+\vspace{0.5 cm}
 \begin{onlyenv}<1>
 \begin{center}
 \includegraphics[height=5 cm]{img/python-gil-meme-1.jpg}
@@ -72,12 +72,15 @@
 \includegraphics[height=5 cm]{img/python-gil-meme-3.png}
 \end{center}
 \end{onlyenv}\begin{onlyenv}<4>
+\hspace{-0.25 cm}\textcolor{darkblue}{In pseudocode:}
+
+\vspace{0.5 cm}
 \begin{minted}{c}
-pthread_mutex_lock(&global_interpreter_lock);
+ pthread_mutex_lock(&global_interpreter_lock);
 
-PyEval(python_bytecode_instruction);
+ PyEval(python_bytecode_instruction);
 
-pthread_mutex_unlock(&global_interpreter_lock);
+ pthread_mutex_unlock(&global_interpreter_lock);
 \end{minted}
 \end{onlyenv}\begin{onlyenv}<5>
 \includegraphics[width=\linewidth]{img/new_gil.png}
@@ -94,7 +97,15 @@ pthread_mutex_unlock(&global_interpreter_lock);
 Python 3.13.0 was released 16 days ago.
 
 \vspace{1 cm}
-\uncover<2>{It includes two new features for avoiding the GIL.}
+\uncover<2>{It adds two new ways to avoid the GIL.}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\vspace{1 cm}
+\LARGE
+\begin{center}
+\textcolor{darkblue}{Method \#1: subinterpreters}
 \end{center}
 \end{frame}
 
@@ -107,10 +118,10 @@ Python 3.13.0 was released 16 days ago.
 \end{columns}
 
 \vspace{0.5 cm}
-\uncover<2>{Pre-3.13 trade-off: shared memory + GIL in multithreading or shared-nothing + true parallel-processing in multiprocessing. Now we have an in-between option.}
+\uncover<2>{Pre-3.13 trade-off: shared memory + GIL in {\bf multithreading} or shared-nothing + true parallel-processing in {\bf multiprocessing}. \textcolor{darkblue}{Now we have an in-between option.}}
 \end{frame}
 
-\begin{frame}[fragile]{Method \#1: subinterpreters}
+\begin{frame}[fragile]{It is now possible, but not easy, to use subinterpreters in Python}
 \vspace{0.35 cm}
 \scriptsize
 \begin{minted}{python}
@@ -139,11 +150,23 @@ assert out_queue.get() == 142
 \end{minted}
 \end{frame}
 
-\begin{frame}{Method \#1: subinterpreters}
+\begin{frame}{Very little support from libraries}
+\vspace{1 cm}
 \Large
 
 \begin{center}
-Many modules, like NumPy, can't be used in a subinterpreter yet!
+Many libraries, like NumPy, can't be used in subinterpreters yet.
+
+\vspace{1 cm}
+\uncover<2->{(NumPy just seg-faults!)}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\vspace{1 cm}
+\LARGE
+\begin{center}
+\textcolor{darkblue}{Method \#2: free-threading}
 \end{center}
 \end{frame}
 
@@ -162,7 +185,7 @@ make install
 \uncover<2>{Free-threaded Python is a separate ABI, ``{\tt cp313t}'', rather than ``{\tt cp313}''.}
 
 \vspace{0.25 cm}
-\uncover<2->{They have to explicitly opt-in to it.}
+\uncover<2->{Compiled extensions have to explicitly opt-in.}
 \end{frame}
 
 \begin{frame}{Free-threaded Python has been discussed for a long time}
@@ -176,15 +199,99 @@ make install
 \uncover<2->{Five forked Pythons, in 2000, 2008, 2013, 2017, 2021, experimentally disabled the GIL.}
 
 \vspace{0.25 cm}
-\uncover<3->{Until recently, they all made single (and sometimes multi) threaded performance worse.}
+\uncover<3->{Until recently, they all made single (and sometimes multi) threaded performance \underline{\it worse}.}
 \end{frame}
 
-\begin{frame}{Scaling of pure Python computations}
+\begin{frame}[fragile]{Why is it working now?}
 \vspace{0.5 cm}
-\only<1>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-basic.pdf}}\only<2>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-circle.pdf}}\only<3>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-extra.pdf}}
+\large
+The main issue was CPython's ubiquitous reference counting. Replacing
+
+\vspace{0.1 cm}
+\begin{minted}{c}
+    ((PyObject*)(obj))->ob_refcnt++;
+\end{minted}
+
+\vspace{0.1 cm}
+with an atomic operation (or similar) is expensive because it is called so often.
+
+\vspace{0.5 cm}
+\uncover<2->{J.~Choi, T.~Shull, J.~Torrellas, {\it Biased reference counting: minimizing atomic operations in garbage collection}, PACT'18 (\textcolor{blue}{\href{https://doi.org/10.1145/3243176.3243195}{DOI 10.1145/3243176.3243195}}).}
+
+\vspace{0.25 cm}
+\uncover<3->{Most objects are only referenced by the thread in which they were created.}
+
+\begin{center}
+\uncover<4->{\includegraphics[width=0.63\linewidth]{img/two-reference-counters.pdf}}
+\end{center}
 \end{frame}
 
-\begin{frame}{CPU versus time in pure Python computations}
+\begin{frame}{Also\ldots \hspace{5 cm} \small\url{https://peps.python.org/pep-0703}}
+\vspace{0.5 cm}
+\large
+\begin{itemize}
+\item no reference counting of immortal objects: \mintinline{python}{None}, \mintinline{python}{True}, \mintinline{python}{False}, small integers, interned strings\ldots
+\item deferred reference counting: top-level functions, code objects, modules, methods tend to be accessed by many threads; don't reference count, only garbage collect
+\item replacing PyMalloc (for small Python objects) with mimalloc
+\item no linked lists in garbage collecting
+\item no more generational garbage collecting (reference counting handles short-lived objects)
+\item locks on all mutable containers (lists, dicts) with optimistic access
+\item alternatives to borrowed references in C (\mintinline{c}{PyList_GetItem} $\to$ \mintinline{c}{PyList_FetchItem})
+\item ``critical sections'' in bytecode sequences to avoid deadlocks
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\vspace{1 cm}
+\LARGE
+\begin{center}
+\textcolor{darkblue}{Scaling tests}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Something computationally expensive in pure Python}
+\vspace{0.4 cm}
+\scriptsize
+\begin{minted}{python}
+# Can't use NumPy in subinterpreters, so use Python's built-in array instead.
+offsets = (ctypes.c_int64 * (N + 1)).from_address(ptr_offsets)
+pt = (ctypes.c_float * offsets[-1]).from_address(ptr_pt)
+eta = (ctypes.c_float * offsets[-1]).from_address(ptr_eta)
+phi = (ctypes.c_float * offsets[-1]).from_address(ptr_phi)
+mass = (ctypes.c_float * N).from_address(ptr_mass)
+
+# Dimuon mass on all combinations of muons per event...
+for event in range(start, stop):
+    max_mass = 0
+    for i in range(offsets[event], offsets[event + 1]):
+        pt1 = pt[i]
+        eta1 = eta[i]
+        phi1 = phi[i]
+        for j in range(i + 1, offsets[event + 1]):
+            pt2 = pt[j]
+            eta2 = eta[j]
+            phi2 = phi[j]
+            m = sqrt(2*pt1*pt2*(cosh(eta1 - eta2) - cos(phi1 - phi2)))
+            if m > max_mass:
+                max_mass = m
+    mass[event] = max_mass
+\end{minted}
+\end{frame}
+
+\begin{frame}{Scaling test results (8 physical cores)}
+\large
+\vspace{0.5 cm}
+\begin{columns}
+\column{0.8\linewidth}
+\only<1>{\includegraphics[width=\linewidth]{img/scaling-of-compute-basic.pdf}}\only<2>{\includegraphics[width=\linewidth]{img/scaling-of-compute-circle.pdf}}\only<3>{\includegraphics[width=\linewidth]{img/scaling-of-compute-extra.pdf}}
+
+\column{0.25\linewidth}
+\only<1>{Subinterpreters and free-threading both escape single-thread scaling limit.}\only<2>{Free-threading doesn't have all the latest optimizations; single-threaded is slower (for now).}\only<3>{In fact, it's a constant factor.}
+\end{columns}
+\end{frame}
+
+\begin{frame}{CPUs are constantly busy, even though scaling isn't perfect}
+\Large
 \vspace{0.25 cm}
 \begin{center}
 \begin{onlyenv}<1>
@@ -193,16 +300,25 @@ make install
 \includegraphics[width=0.93\linewidth]{img/cpu-of-compute-free-threads.pdf}
 \end{onlyenv}\begin{onlyenv}<2>
 \includegraphics[width=0.93\linewidth]{img/cpu-of-compute-gil-threads.pdf}
+
+For a pure Python, computationally intensive workload like this, \\ the GIL strictly limits available threads to 1.
 \end{onlyenv}
 \end{center}
 \end{frame}
 
-\begin{frame}{Scaling of pure Python computations (big)}
+\begin{frame}{Can we go further? (48 physical cores)}
+\large
 \vspace{0.5 cm}
-\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-big.pdf}
+\begin{columns}
+\column{0.8\linewidth}
+\includegraphics[width=\linewidth]{img/scaling-of-compute-big.pdf}
+
+\column{0.25\linewidth}
+The hyperthreading threshold doesn't look significant on this hardware (AWS c7i.metal-48xl).
+\end{columns}
 \end{frame}
 
-\begin{frame}{CPU versus time in pure Python computations (big)}
+\begin{frame}{Not all threads finish equal work in equal times}
 \vspace{0.25 cm}
 \begin{center}
 \includegraphics[width=0.93\linewidth]{img/cpu-of-compute-subinterpreters-big.pdf}
@@ -211,29 +327,129 @@ make install
 \end{center}
 \end{frame}
 
-\begin{frame}{Parallelizing Uproot ``externally''}
-\vspace{0.5 cm}
-\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-external.pdf}
-\end{frame}
-
-\begin{frame}{Parallelizing Uproot ``internally''}
-\vspace{0.5 cm}
-\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-internal.pdf}
-\end{frame}
-
-\begin{frame}{CPU versus time for Uproot (``internal'')}
-\vspace{0.25 cm}
+\begin{frame}
+\vspace{1 cm}
+\LARGE
 \begin{center}
-\includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-16.pdf}
+\textcolor{darkblue}{Scaling tests with Uproot}
 \end{center}
 \end{frame}
 
-\begin{frame}{Big parallelization of Uproot (``internal'')}
-\vspace{0.5 cm}
-\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-internal-big.pdf}
+\begin{frame}[fragile]{Uproot has already been (partly) evading the GIL}
+\large
+\vspace{0.7 cm}
+
+Most computationally intensive work is offloaded to NumPy and Awkward Array, which release the GIL before numerical computations.
+
+\small
+\vspace{0.1 cm}
+\begin{minted}{c}
+   Py_BEGIN_ALLOW_THREADS;                // releases the GIL
+
+   big_computation_without_PyObjects();   // other threads run, too
+
+   Py_END_ALLOW_THREADS;                  // re-acquires the GIL
+
+   return result_with_PyObjects;
+\end{minted}
+
+\large
+\vspace{0.4 cm}
+\uncover<2->{But we only enter GIL-released C code on a per-TBasket basis.}
+
+\vspace{0.4 cm}
+\uncover<2->{The code between these excursions are synchronization points (Amdahl's law).}
 \end{frame}
 
-\begin{frame}{CPU versus time for Uproot (``internal'')}
+\begin{frame}[fragile]{Two ways to parallelize Uproot}
+\large
+\vspace{1 cm}
+\hspace{-0.5 cm}\textcolor{darkblue}{``External'':} some code that controls threading (e.g.\ Dask) calls Uproot
+
+\small
+\vspace{0.1 cm}
+\begin{minted}{python}
+def in_thread(uproot_tree, start, stop):
+    return uproot_tree.arrays(entry_start=start, entry_stop=stop)
+
+executor = ThreadPoolExecutor(max_workers=N)
+batches = executor.map(in_thread, list_of_args_tuples)
+\end{minted}
+
+\large
+\vspace{0.5 cm}
+
+\hspace{-0.5 cm}\textcolor{darkblue}{``Internal'':} Uproot reads TBaskets in parallel but returns one array
+
+\small
+\vspace{0.1 cm}
+\begin{minted}{python}
+executor = ThreadPoolExecutor(max_workers=N)
+
+array = uproot_tree.arrays(
+    decompression_executor=executor, interpretation_executor=executor
+)
+\end{minted}
+\end{frame}
+
+\begin{frame}{Parallelizing Uproot ``externally''}
+\large
+\vspace{0.5 cm}
+\begin{columns}
+\column{0.8\linewidth}
+\includegraphics[width=\linewidth]{img/scaling-of-uproot-external.pdf}
+
+\column{0.25\linewidth}
+GIL-bound is not bad, but there's a small improvement.
+
+\vspace{0.5 cm}
+The bigger difference is between the default file \mintinline{python}{handler} and \mintinline{python}{MemmapSource}.
+
+\vspace{\baselineskip}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Parallelizing Uproot ``internally''}
+\large
+\vspace{0.5 cm}
+\begin{columns}
+\column{0.8\linewidth}
+\includegraphics[width=\linewidth]{img/scaling-of-uproot-internal.pdf}
+
+\column{0.25\linewidth}
+GIL-bound is not bad, but there's a small improvement.
+
+\vspace{0.5 cm}
+Especially in the internal case \textcolor{gray}{(more fine-grained; less waste from multiple threads reading the same TBaskets)}.
+\end{columns}
+\end{frame}
+
+\begin{frame}{CPUs are not always busy, but free-threaded is busier\ldots}
+\vspace{1 cm}
+\begin{center}
+\includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-16.pdf}
+
+\vspace{0.5 cm}
+Note: file-reading tasks performed with warm cache, so RAM $\to$ CPU is the only I/O.
+\end{center}
+\end{frame}
+
+\begin{frame}{Can we go further? (48 physical cores, ``internal'' parallelization)}
+\large
+\vspace{0.5 cm}
+\begin{columns}
+\column{0.8\linewidth}
+\includegraphics[width=\linewidth]{img/scaling-of-uproot-internal-big.pdf}
+
+\column{0.25\linewidth}
+Free-threading starts to be relevant above 8 threads and keeps getting better until 3~GB/second.
+
+\vspace{1 cm}
+You need well over 8 cores to see this.
+\end{columns}
+\end{frame}
+
+\begin{frame}{CPUs are still not always busy, but free-threaded is busier\ldots}
 \vspace{0.25 cm}
 \begin{center}
 \includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-big-32.pdf}
@@ -242,6 +458,21 @@ make install
 \end{center}
 \end{frame}
 
+\begin{frame}{Conclusions}
+\vspace{0.3 cm}
+\Large
+\begin{itemize}\setlength{\itemsep}{0.2 cm}
+\item<1-> Python 3.13 provides two new ways to avoid the GIL.
+\item<2-> {\bf Subprocessors} require more effort from Python users and are not well supported by libraries (NumPy).
+\item<3-> {\bf Free-threading} required a massive overhaul of Python's internals, but ``just works'' from a Python user's perspective.
 
+\vspace{0.2 cm}
+\uncover<4->{\textcolor{gray}{(Python community is much more interested in free-threading.)}}
+
+\vspace{0.1 cm}
+\item<5-> They scale identically, apart from a constant factor (bytecode optimizations, to be implemented later in free-threading mode).
+\item<6-> Uproot has already been releasing the GIL, but benefits from free-threading if you have a lot more than 8 cores.
+\end{itemize}
+\end{frame}
 
 \end{document}

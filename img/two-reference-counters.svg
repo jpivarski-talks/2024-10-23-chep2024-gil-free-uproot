@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="227.90285mm"
+   height="86.183968mm"
+   viewBox="0 0 227.90285 86.183968"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="two-reference-counters.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.2856556"
+     inkscape:cx="447.24262"
+     inkscape:cy="190.56425"
+     inkscape:window-width="2554"
+     inkscape:window-height="1365"
+     inkscape:window-x="1920"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:snap-nodes="true"
+     inkscape:snap-bbox="false"
+     inkscape:snap-bbox-midpoints="false"
+     inkscape:snap-object-midpoints="false"
+     inkscape:object-nodes="false"
+     inkscape:snap-center="false"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path87550" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path87544" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(1.6305437,-95.261078)">
+    <path
+       style="font-variation-settings:normal;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Mend);stop-color:#000000;stop-opacity:1"
+       d="m 136.65753,113.89536 -27.14508,16.76381"
+       id="path88110"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="font-variation-settings:normal;opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow1Mend);stop-color:#000000;stop-opacity:1"
+       d="M 136.65753,165.09247 109.51245,148.32866"
+       id="path87539"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="3.3694563"
+       y="120.58054"
+       id="text8702"><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="120.58054"
+         id="tspan21012"><tspan
+   style="fill:#0055d4"
+   id="tspan39138">struct</tspan> PyObject {</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="128.51804"
+         id="tspan21016">  ...</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="136.45554"
+         id="tspan21018">  <tspan
+   style="fill:#0055d4"
+   id="tspan28970">uint32_t</tspan>   ob_ref_local;</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="144.39304"
+         id="tspan21020">  <tspan
+   style="fill:#0055d4"
+   id="tspan33604">Py_ssize_t</tspan> ob_ref_shared;</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="152.33054"
+         id="tspan21022">  ...</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';text-align:start;text-anchor:start;fill:#4d4d4d;stroke-width:0.264583"
+         x="3.3694563"
+         y="160.26804"
+         id="tspan21024">};</tspan></text>
+    <ellipse
+       style="font-variation-settings:normal;opacity:1;fill:#fff6d5;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;stop-color:#000000;stop-opacity:1"
+       id="path87350"
+       cx="169.99622"
+       cy="113.2676"
+       rx="51.026093"
+       ry="12.756523" />
+    <ellipse
+       style="font-variation-settings:normal;opacity:1;fill:#ffd5f6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;stop-color:#000000;stop-opacity:1"
+       id="ellipse87432"
+       cx="169.99622"
+       cy="163.43852"
+       rx="51.026093"
+       ry="12.756523" />
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="170.2117"
+       y="111.05068"
+       id="text78240"><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="170.2117"
+         y="111.05068"
+         id="tspan78246">local reference counter,</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="170.2117"
+         y="118.98818"
+         id="tspan80256">freely mutated by thread</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;line-height:1.25;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="170.13419"
+       y="162.27992"
+       id="text78332"><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="170.13419"
+         y="162.27992"
+         id="tspan78330">shared reference counter,</tspan><tspan
+         sodipodi:role="line"
+         style="stroke-width:0.264583"
+         x="170.13419"
+         y="170.21742"
+         id="tspan87062">carefully guarded</tspan></text>
+  </g>
+</svg>
