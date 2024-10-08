@@ -61,4 +61,74 @@
 HERE
 \end{frame}
 
+\begin{frame}{Long history of the GIL}
+\vspace{0.5 cm}
+\includegraphics[width=\linewidth]{img/googletrends-gil-timeline.pdf}
+\end{frame}
+
+\begin{frame}{Scaling of pure Python computations}
+\vspace{0.5 cm}
+\only<1>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-basic.pdf}}\only<2>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-circle.pdf}}\only<3>{\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-extra.pdf}}
+\end{frame}
+
+\begin{frame}{CPU versus time in pure Python computations}
+\vspace{0.25 cm}
+\begin{center}
+\begin{onlyenv}<1>
+\includegraphics[width=0.93\linewidth]{img/cpu-of-compute-subinterpreters.pdf}
+
+\includegraphics[width=0.93\linewidth]{img/cpu-of-compute-free-threads.pdf}
+\end{onlyenv}\begin{onlyenv}<2>
+\includegraphics[width=0.93\linewidth]{img/cpu-of-compute-gil-threads.pdf}
+\end{onlyenv}
+\end{center}
+\end{frame}
+
+\begin{frame}{Scaling of pure Python computations (big)}
+\vspace{0.5 cm}
+\includegraphics[width=0.8\linewidth]{img/scaling-of-compute-big.pdf}
+\end{frame}
+
+\begin{frame}{CPU versus time in pure Python computations (big)}
+\vspace{0.25 cm}
+\begin{center}
+\includegraphics[width=0.93\linewidth]{img/cpu-of-compute-subinterpreters-big.pdf}
+
+\includegraphics[width=0.93\linewidth]{img/cpu-of-compute-free-threads-big.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Parallelizing Uproot ``externally''}
+\vspace{0.5 cm}
+\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-external.pdf}
+\end{frame}
+
+\begin{frame}{Parallelizing Uproot ``internally''}
+\vspace{0.5 cm}
+\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-internal.pdf}
+\end{frame}
+
+\begin{frame}{CPU versus time for Uproot (``internal'')}
+\vspace{0.25 cm}
+\begin{center}
+\includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-16.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}{Big parallelization of Uproot (``internal'')}
+\vspace{0.5 cm}
+\includegraphics[width=0.8\linewidth]{img/scaling-of-uproot-internal-big.pdf}
+\end{frame}
+
+\begin{frame}{CPU versus time for Uproot (``internal'')}
+\vspace{0.25 cm}
+\begin{center}
+\includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-big-32.pdf}
+
+\includegraphics[width=0.93\linewidth]{img/cpu-of-uproot-internal-big-64.pdf}
+\end{center}
+\end{frame}
+
+
+
 \end{document}
